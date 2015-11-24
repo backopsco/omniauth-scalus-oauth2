@@ -36,7 +36,7 @@ class App < Sinatra::Base
     </head>
     <body>
       <h3>Authorized</h3>
-      <p>Shop: #{request.env['omniauth.auth'].uid}</p>
+      <p>Organization: #{request.env['omniauth.auth'].uid}</p>
       <p>Token: #{request.env['omniauth.auth']['credentials']['token']}</p>
     </body>
     </html>
