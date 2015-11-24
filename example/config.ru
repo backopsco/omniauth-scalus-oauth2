@@ -19,8 +19,8 @@ class App < Sinatra::Base
     </head>
     <body>
       <form action="/auth/scalus" method="get">
-      <label for="shop">Enter your store's URL:</label>
-      <input type="text" name="shop" placeholder="your-shop-url.myscalus.com">
+      <label for="organization">Enter your Scalus Subdomain:</label>
+      <input type="text" name="organization" placeholder="your-scalus-url.scalus.com">
       <button type="submit">Log In</button>
       </form>
     </body>

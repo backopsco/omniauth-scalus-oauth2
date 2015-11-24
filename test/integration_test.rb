@@ -11,9 +11,9 @@ class IntegrationTest < Minitest::Test
   end
 
   def test_authorize
-    response = authorize('snowdevil.myscalus.com')
+    response = authorize('snowdevil.scalus.com')
     assert_equal 302, response.status
-    assert_match /\A#{Regexp.quote("https://snowdevil.myscalus.com/admin/oauth/authorize?")}/, response.location
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/admin/oauth/authorize?")}/, response.location
     redirect_params = Rack::Utils.parse_query(URI(response.location).query)
     assert_equal "123", redirect_params['client_id']
     assert_equal "https://app.example.com/auth/scalus/callback", redirect_params['redirect_uri']
@@ -23,27 +23,27 @@ class IntegrationTest < Minitest::Test
   def test_authorize_overrides_site_with_https_scheme
     build_app setup: lambda { |env|
       params = Rack::Utils.parse_query(env['QUERY_STRING'])
-      env['omniauth.strategy'].options[:client_options][:site] = "http://#{params['shop']}"
+      env['omniauth.strategy'].options[:client_options][:site] = "http://#{params['organization']}"
     }
 
-    response = authorize('snowdevil.myscalus.com')
-    assert_match /\A#{Regexp.quote("https://snowdevil.myscalus.com/admin/oauth/authorize?")}/, response.location
+    response = authorize('snowdevil.scalus.com')
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/admin/oauth/authorize?")}/, response.location
   end
 
   def test_site_validation
     code = SecureRandom.hex(16)
 
     [
-      'foo.example.com',                # shop doesn't end with .myscalus.com
-      'http://snowdevil.myscalus.com', # shop contains protocol
-      'snowdevil.myscalus.com/path',   # shop contains path
-      'user@snowdevil.myscalus.com',   # shop contains user
-      'snowdevil.myscalus.com:22',     # shop contains port
-    ].each do |shop, valid|
-      response = authorize(shop)
+      'foo.example.com',                # organization doesn't end with .scalus.com
+      'http://snowdevil.scalus.com', # organization contains protocol
+      'snowdevil.scalus.com/path',   # organization contains path
+      'user@snowdevil.scalus.com',   # organization contains user
+      'snowdevil.scalus.com:22',     # organization contains port
+    ].each do |organization, valid|
+      response = authorize(organization)
       assert_auth_failure(response, 'invalid_site')
 
-      response = callback(sign_params(shop: shop, code: code))
+      response = callback(sign_params(organization: organization, code: code))
       assert_auth_failure(response, 'invalid_site')
     end
   end
@@ -53,7 +53,7 @@ class IntegrationTest < Minitest::Test
     code = SecureRandom.hex(16)
     expect_access_token_request(access_token)
 
-    response = callback(sign_params(shop: 'snowdevil.myscalus.com', code: code, state: opts["rack.session"]["omniauth.state"]))
+    response = callback(sign_params(organization: 'snowdevil.scalus.com', code: code, state: opts["rack.session"]["omniauth.state"]))
 
     assert_callback_success(response, access_token, code)
   end
@@ -63,7 +63,7 @@ class IntegrationTest < Minitest::Test
     code = SecureRandom.hex(16)
     expect_access_token_request(access_token)
 
-    response = callback(sign_params(shop: 'snowdevil.myscalus.com', code: code, state: opts["rack.session"]["omniauth.state"]).merge(signature: 'ignored'))
+    response = callback(sign_params(organization: 'snowdevil.scalus.com', code: code, state: opts["rack.session"]["omniauth.state"]).merge(signature: 'ignored'))
 
     assert_callback_success(response, access_token, code)
   end
@@ -71,13 +71,13 @@ class IntegrationTest < Minitest::Test
   def test_callback_custom_params
     access_token = SecureRandom.hex(16)
     code = SecureRandom.hex(16)
-    FakeWeb.register_uri(:post, "https://snowdevil.myscalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
 
     now = Time.now.to_i
-    params = { shop: 'snowdevil.myscalus.com', code: code, timestamp: now, next: '/products?page=2&q=red%20shirt', state: opts["rack.session"]["omniauth.state"] }
-    encoded_params = "code=#{code}&next=/products?page=2%26q=red%2520shirt&shop=snowdevil.myscalus.com&state=#{opts["rack.session"]["omniauth.state"]}&timestamp=#{now}"
+    params = { organization: 'snowdevil.scalus.com', code: code, timestamp: now, next: '/products?page=2&q=red%20shirt', state: opts["rack.session"]["omniauth.state"] }
+    encoded_params = "code=#{code}&next=/products?page=2%26q=red%2520shirt&organization=snowdevil.scalus.com&state=#{opts["rack.session"]["omniauth.state"]}&timestamp=#{now}"
     params[:hmac] = OpenSSL::HMAC.hexdigest(OpenSSL::Digest::SHA256.new, @secret, encoded_params)
 
     response = callback(params)
@@ -87,14 +87,14 @@ class IntegrationTest < Minitest::Test
 
   def test_callback_rejects_invalid_hmac
     @secret = 'wrong_secret'
-    response = callback(sign_params(shop: 'snowdevil.myscalus.com', code: SecureRandom.hex(16)))
+    response = callback(sign_params(organization: 'snowdevil.scalus.com', code: SecureRandom.hex(16)))
 
     assert_auth_failure(response, 'invalid_signature')
   end
 
   def test_callback_rejects_old_timestamps
     expired_timestamp = Time.now.to_i - OmniAuth::Strategies::Scalus::CODE_EXPIRES_AFTER - 1
-    response = callback(sign_params(shop: 'snowdevil.myscalus.com', code: SecureRandom.hex(16), timestamp: expired_timestamp))
+    response = callback(sign_params(organization: 'snowdevil.scalus.com', code: SecureRandom.hex(16), timestamp: expired_timestamp))
 
     assert_auth_failure(response, 'invalid_signature')
   end
@@ -102,14 +102,14 @@ class IntegrationTest < Minitest::Test
   def test_callback_rejects_missing_hmac
     code = SecureRandom.hex(16)
 
-    response = callback(shop: 'snowdevil.myscalus.com', code: code, timestamp: Time.now.to_i)
+    response = callback(organization: 'snowdevil.scalus.com', code: code, timestamp: Time.now.to_i)
 
     assert_auth_failure(response, 'invalid_signature')
   end
 
   def test_callback_rejects_body_params
     code = SecureRandom.hex(16)
-    params = sign_params(shop: 'snowdevil.myscalus.com', code: code)
+    params = sign_params(organization: 'snowdevil.scalus.com', code: code)
     body = Rack::Utils.build_nested_query(unsigned: 'value')
 
     response = request.get("https://app.example.com/auth/scalus/callback?#{Rack::Utils.build_query(params)}",
@@ -122,16 +122,16 @@ class IntegrationTest < Minitest::Test
   def test_provider_options
     build_app scope: 'read_products,read_orders,write_content',
               callback_path: '/admin/auth/legacy/callback',
-              myscalus_domain: 'myscalus.dev:3000',
+              scalus_domain: 'scalus.dev:3000',
               setup: lambda { |env|
-                shop = Rack::Request.new(env).GET['shop']
-                shop += ".myscalus.dev:3000" unless shop.include?(".")
-                env['omniauth.strategy'].options[:client_options][:site] = "https://#{shop}"
+                organization = Rack::Request.new(env).GET['organization']
+                organization += ".scalus.dev:3000" unless organization.include?(".")
+                env['omniauth.strategy'].options[:client_options][:site] = "https://#{organization}"
               }
 
     response = authorize('snowdevil')
     assert_equal 302, response.status
-    assert_match /\A#{Regexp.quote("https://snowdevil.myscalus.dev:3000/admin/oauth/authorize?")}/, response.location
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.dev:3000/admin/oauth/authorize?")}/, response.location
     redirect_params = Rack::Utils.parse_query(URI(response.location).query)
     assert_equal 'read_products,read_orders,write_content', redirect_params['scope']
     assert_equal 'https://app.example.com/admin/auth/legacy/callback', redirect_params['redirect_uri']
@@ -139,11 +139,11 @@ class IntegrationTest < Minitest::Test
   def test_callback_with_invalid_state_fails
     access_token = SecureRandom.hex(16)
     code = SecureRandom.hex(16)
-    FakeWeb.register_uri(:post, "https://snowdevil.myscalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
 
-    response = callback(sign_params(shop: 'snowdevil.myscalus.com', code: code, state: 'invalid'))
+    response = callback(sign_params(organization: 'snowdevil.scalus.com', code: code, state: 'invalid'))
 
     assert_equal 302, response.status
     assert_equal '/auth/failure?message=csrf_detected&strategy=scalus', response.location
@@ -161,7 +161,7 @@ class IntegrationTest < Minitest::Test
   end
 
   def expect_access_token_request(access_token)
-    FakeWeb.register_uri(:post, "https://snowdevil.myscalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
   end
@@ -172,7 +172,7 @@ class IntegrationTest < Minitest::Test
     assert_equal token_request_params['client_secret'], @secret
     assert_equal token_request_params['code'], code
 
-    assert_equal 'snowdevil.myscalus.com', @omniauth_result.uid
+    assert_equal 'snowdevil.scalus.com', @omniauth_result.uid
     assert_equal access_token, @omniauth_result.credentials.token
     assert_equal false, @omniauth_result.credentials.expires
 
@@ -200,8 +200,8 @@ class IntegrationTest < Minitest::Test
     @app = Rack::Session::Cookie.new(app, secret: SecureRandom.hex(64))
   end
 
-  def authorize(shop)
-    request.get("https://app.example.com/auth/scalus?shop=#{CGI.escape(shop)}", opts)
+  def authorize(organization)
+    request.get("https://app.example.com/auth/scalus?organization=#{CGI.escape(organization)}", opts)
   end
 
   def callback(params)

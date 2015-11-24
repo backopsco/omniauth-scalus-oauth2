@@ -11,7 +11,7 @@ describe OmniAuth::Strategies::Scalus do
 
     @client_id = '123'
     @client_secret = '53cr3tz'
-    @options = {:client_options => {:site => 'https://example.myscalus.com'}}
+    @options = {:client_options => {:site => 'https://example.scalus.com'}}
   end
 
   subject do
@@ -38,7 +38,7 @@ describe OmniAuth::Strategies::Scalus do
 
   describe '#client' do
     it 'has correct scalus site' do
-      subject.client.site.should eq('https://example.myscalus.com')
+      subject.client.site.should eq('https://example.scalus.com')
     end
 
     it 'has correct authorize url' do
@@ -80,8 +80,8 @@ describe OmniAuth::Strategies::Scalus do
   end
 
   describe '#uid' do
-    it 'returns the shop' do
-      subject.uid.should eq('example.myscalus.com')
+    it 'returns the organization' do
+      subject.uid.should eq('example.scalus.com')
     end
   end
 
@@ -115,23 +115,23 @@ describe OmniAuth::Strategies::Scalus do
   end
 
   describe '#valid_site?' do
-    it 'returns true if the site contains .myscalus.com' do
-      @options = {:client_options => {:site => 'http://foo.myscalus.com/'}}
+    it 'returns true if the site contains .scalus.com' do
+      @options = {:client_options => {:site => 'http://foo.scalus.com/'}}
       subject.valid_site?.should eq(true)
     end
 
-    it 'returns false if the site does not contain .myscalus.com' do
+    it 'returns false if the site does not contain .scalus.com' do
       @options = {:client_options => {:site => 'http://foo.example.com/'}}
       subject.valid_site?.should eq(false)
     end
 
-    it 'uses configurable option for myscalus_domain' do
-      @options = {:client_options => {:site => 'http://foo.example.com/'}, :myscalus_domain => 'example.com'}
+    it 'uses configurable option for scalus_domain' do
+      @options = {:client_options => {:site => 'http://foo.example.com/'}, :scalus_domain => 'example.com'}
       subject.valid_site?.should eq(true)
     end
 
-    it 'allows custom port for myscalus_domain' do
-      @options = {:client_options => {:site => 'http://foo.example.com:3456/'}, :myscalus_domain => 'example.com:3456'}
+    it 'allows custom port for scalus_domain' do
+      @options = {:client_options => {:site => 'http://foo.example.com:3456/'}, :scalus_domain => 'example.com:3456'}
       subject.valid_site?.should eq(true)
     end
   end

@@ -15,17 +15,17 @@ module OmniAuth
       }
 
       option :callback_url
-      option :myscalus_domain, 'myscalus.com'
+      option :scalus_domain, 'scalus.com'
 
       option :setup, proc { |env|
         request = Rack::Request.new(env)
-        env['omniauth.strategy'].options[:client_options][:site] = "https://#{request.GET['shop']}"
+        env['omniauth.strategy'].options[:client_options][:site] = "https://#{request.GET['organization']}"
       }
 
       uid { URI.parse(options[:client_options][:site]).host }
 
       def valid_site?
-        !!(/\A(https|http)\:\/\/[a-zA-Z0-9][a-zA-Z0-9\-]*\.#{Regexp.quote(options[:myscalus_domain])}[\/]?\z/ =~ options[:client_options][:site])
+        !!(/\A(https|http)\:\/\/[a-zA-Z0-9][a-zA-Z0-9\-]*\.#{Regexp.quote(options[:scalus_domain])}[\/]?\z/ =~ options[:client_options][:site])
       end
 
       def valid_signature?
