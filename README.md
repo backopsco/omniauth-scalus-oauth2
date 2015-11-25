@@ -45,7 +45,7 @@ Here's an example *Authentication Hash* available in `request.env['omniauth.auth
 ```ruby
 {
   :provider => 'scalus',
-  :uid => 'example.scalus.com',
+  :uid => 'example_slug.scalus.com', # example\_slug is the organization's subdomain
   :credentials => {
     :token => 'afasd923kjh0934kf', # OAuth 2.0 access_token, which you store and use to authenticate API requests
   }

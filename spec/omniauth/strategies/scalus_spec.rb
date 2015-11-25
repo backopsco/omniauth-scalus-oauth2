@@ -42,11 +42,11 @@ describe OmniAuth::Strategies::Scalus do
     end
 
     it 'has correct authorize url' do
-      subject.client.options[:authorize_url].should eq('/admin/oauth/authorize')
+      subject.client.options[:authorize_url].should eq('/oauth2/authorize')
     end
 
     it 'has correct token url' do
-      subject.client.options[:token_url].should eq('/admin/oauth/access_token')
+      subject.client.options[:token_url].should eq('/oauth2/access_token')
     end
   end
 

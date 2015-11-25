@@ -10,8 +10,8 @@ module OmniAuth
       CODE_EXPIRES_AFTER = 10 * MINUTE
 
       option :client_options, {
-        :authorize_url => '/admin/oauth/authorize',
-        :token_url => '/admin/oauth/access_token'
+        :authorize_url => '/oauth2/authorize',
+        :token_url => '/oauth2/access_token'
       }
 
       option :callback_url

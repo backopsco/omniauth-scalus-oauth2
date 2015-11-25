@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+# require 'byebug'
 
 class IntegrationTest < Minitest::Test
   def setup
@@ -13,7 +14,7 @@ class IntegrationTest < Minitest::Test
   def test_authorize
     response = authorize('snowdevil.scalus.com')
     assert_equal 302, response.status
-    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/admin/oauth/authorize?")}/, response.location
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/oauth2/authorize?")}/, response.location
     redirect_params = Rack::Utils.parse_query(URI(response.location).query)
     assert_equal "123", redirect_params['client_id']
     assert_equal "https://app.example.com/auth/scalus/callback", redirect_params['redirect_uri']
@@ -27,7 +28,7 @@ class IntegrationTest < Minitest::Test
     }
 
     response = authorize('snowdevil.scalus.com')
-    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/admin/oauth/authorize?")}/, response.location
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.com/oauth2/authorize?")}/, response.location
   end
 
   def test_site_validation
@@ -71,7 +72,7 @@ class IntegrationTest < Minitest::Test
   def test_callback_custom_params
     access_token = SecureRandom.hex(16)
     code = SecureRandom.hex(16)
-    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/oauth2/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
 
@@ -121,7 +122,7 @@ class IntegrationTest < Minitest::Test
 
   def test_provider_options
     build_app scope: 'read_products,read_orders,write_content',
-              callback_path: '/admin/auth/legacy/callback',
+              callback_path: '/auth/legacy/callback',
               scalus_domain: 'scalus.dev:3000',
               setup: lambda { |env|
                 organization = Rack::Request.new(env).GET['organization']
@@ -131,15 +132,15 @@ class IntegrationTest < Minitest::Test
 
     response = authorize('snowdevil')
     assert_equal 302, response.status
-    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.dev:3000/admin/oauth/authorize?")}/, response.location
+    assert_match /\A#{Regexp.quote("https://snowdevil.scalus.dev:3000/oauth2/authorize?")}/, response.location
     redirect_params = Rack::Utils.parse_query(URI(response.location).query)
     assert_equal 'read_products,read_orders,write_content', redirect_params['scope']
-    assert_equal 'https://app.example.com/admin/auth/legacy/callback', redirect_params['redirect_uri']
+    assert_equal 'https://app.example.com/auth/legacy/callback', redirect_params['redirect_uri']
   end
   def test_callback_with_invalid_state_fails
     access_token = SecureRandom.hex(16)
     code = SecureRandom.hex(16)
-    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/oauth2/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
 
@@ -161,7 +162,7 @@ class IntegrationTest < Minitest::Test
   end
 
   def expect_access_token_request(access_token)
-    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/admin/oauth/access_token",
+    FakeWeb.register_uri(:post, "https://snowdevil.scalus.com/oauth2/access_token",
                          body: JSON.dump(access_token: access_token),
                          content_type: 'application/json')
   end
